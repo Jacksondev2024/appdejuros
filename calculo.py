@@ -4,7 +4,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-def calcular_taxa_juros,(PMT, P, n, precisao=1e-6):
+def calcular_taxa_juros(PMT, P, n, precisao=1e-6):
     def func(i):
         PMT_float = float(PMT)  # Conversão explícita para float
         P_float = float(P)      # Conversão explícita para float
