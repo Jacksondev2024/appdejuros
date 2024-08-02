@@ -1,20 +1,19 @@
 from flask import Flask, request, jsonify
 from scipy.optimize import fsolve
-import os
 
 app = Flask(__name__)
 
 def calcular_taxa_juros(PMT, P, n, precisao=1e-6):
     def func(i):
-        return PMT - (P * i) / (1 - (1 + i) ** -n)
+        PMT_float = float(PMT)
+        P_float = float(P)
+        i_float = float(i)
+        return PMT_float - (P_float * i_float) / (1 - (1 + i_float) ** -n)
 
-    # Palpite inicial
     i_guess = 0.01
 
-    # Resolvendo a função
     i_solution, = fsolve(func, i_guess)
 
-    # Verificando a precisão da solução encontrada
     if abs(func(i_solution)) < precisao:
         return i_solution * 100
     else:
@@ -22,13 +21,23 @@ def calcular_taxa_juros(PMT, P, n, precisao=1e-6):
 
 @app.route('/calcular_taxa', methods=['POST'])
 def calcular_taxa():
-    data = request.json
-    PMT = data['PMT']
-    P = data['P']
-    n = data['n']
-    taxa_juros_mensal = calcular_taxa_juros(PMT, P, n)
-    return jsonify({'taxa_juros_mensal': taxa_juros_mensal})
+    try:
+        data = request.json
+        PMT = data.get('PMT')
+        P = data.get('P')
+        n = data.get('n')
+
+        if PMT is None or P is None or n is None:
+            return jsonify({'error': 'Dados insuficientes'}), 400
+
+        taxa_juros_mensal = calcular_taxa_juros(PMT, P, n)
+        if taxa_juros_mensal is None:
+            return jsonify({'error': 'Não foi possível calcular a taxa de juros'}), 500
+
+        return jsonify({'taxa_juros_mensal': taxa_juros_mensal})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
