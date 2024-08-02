@@ -6,14 +6,15 @@ app = Flask(__name__)
 
 def calcular_taxa_juros(PMT, P, n, precisao=1e-6):
     def func(i):
-        PMT_float = float(PMT)  # Conversão explícita para float
-        P_float = float(P)      # Conversão explícita para float
-        i_float = float(i)      # Conversão explícita para float
-        return PMT_float - (P_float * i_float) / (1 - (1 + i_float) ** -n)
+        return PMT - (P * i) / (1 - (1 + i) ** -n)
 
+    # Palpite inicial
     i_guess = 0.01
+
+    # Resolvendo a função
     i_solution, = fsolve(func, i_guess)
 
+    # Verificando a precisão da solução encontrada
     if abs(func(i_solution)) < precisao:
         return i_solution * 100
     else:
@@ -21,7 +22,12 @@ def calcular_taxa_juros(PMT, P, n, precisao=1e-6):
 
 @app.route('/calcular_taxa', methods=['POST'])
 def calcular_taxa():
+    # Verificar o tipo de conteúdo da solicitação
+    if request.content_type != 'application/json':
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+    
     try:
+        # Obter e validar os dados JSON
         data = request.get_json()
 
         if not isinstance(data, dict):
@@ -41,6 +47,7 @@ def calcular_taxa():
         except (ValueError, TypeError):
             return jsonify({'error': 'Dados inválidos'}), 400
 
+        # Calcular a taxa de juros
         taxa_juros_mensal = calcular_taxa_juros(PMT, P, n)
         if taxa_juros_mensal is None:
             return jsonify({'error': 'Não foi possível calcular a taxa de juros'}), 500
