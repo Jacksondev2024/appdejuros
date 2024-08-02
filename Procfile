@@ -1,2 +1,1 @@
-web: waitress-serve --host=0.0.0.0 --port=$PORT calculo:app
-
+web: gunicorn -b 0.0.0.0:$PORT calculo:app
